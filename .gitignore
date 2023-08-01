@@ -8,8 +8,6 @@
 *.so
 *.dylib
 
-internal/config
-
 # Test binary, built with `go test -c`
 *.test
 
@@ -21,3 +19,12 @@ internal/config
 
 # Go workspace file
 go.work
+
+# ide configurate
+.idea
+
+# project configurate
+internal/config
+
+# project logs
+log
