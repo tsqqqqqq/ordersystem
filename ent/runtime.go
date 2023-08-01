@@ -2,8 +2,33 @@
 
 package ent
 
+import (
+	"ordersystem/ent/order"
+	"ordersystem/ent/schema"
+	"time"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	orderMixin := schema.Order{}.Mixin()
+	orderMixinFields0 := orderMixin[0].Fields()
+	_ = orderMixinFields0
+	orderFields := schema.Order{}.Fields()
+	_ = orderFields
+	// orderDescCreateTime is the schema descriptor for create_time field.
+	orderDescCreateTime := orderMixinFields0[0].Descriptor()
+	// order.DefaultCreateTime holds the default value on creation for the create_time field.
+	order.DefaultCreateTime = orderDescCreateTime.Default.(func() time.Time)
+	// orderDescUpdateTime is the schema descriptor for update_time field.
+	orderDescUpdateTime := orderMixinFields0[1].Descriptor()
+	// order.DefaultUpdateTime holds the default value on creation for the update_time field.
+	order.DefaultUpdateTime = orderDescUpdateTime.Default.(func() time.Time)
+	// order.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	order.UpdateDefaultUpdateTime = orderDescUpdateTime.UpdateDefault.(func() time.Time)
+	// orderDescID is the schema descriptor for id field.
+	orderDescID := orderFields[0].Descriptor()
+	// order.DefaultID holds the default value on creation for the id field.
+	order.DefaultID = orderDescID.Default.(func() int64)
 }

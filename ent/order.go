@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"ordersystem/ent/order"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -13,9 +14,15 @@ import (
 
 // Order is the model entity for the Order schema.
 type Order struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID           int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
+	// CreateTime holds the value of the "create_time" field.
+	CreateTime time.Time `json:"create_time,omitempty"`
+	// UpdateTime holds the value of the "update_time" field.
+	UpdateTime time.Time `json:"update_time,omitempty"`
+	// Name holds the value of the "name" field.
+	Name         string `json:"name,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -26,6 +33,10 @@ func (*Order) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case order.FieldID:
 			values[i] = new(sql.NullInt64)
+		case order.FieldName:
+			values[i] = new(sql.NullString)
+		case order.FieldCreateTime, order.FieldUpdateTime:
+			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -46,7 +57,25 @@ func (o *Order) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			o.ID = int(value.Int64)
+			o.ID = int64(value.Int64)
+		case order.FieldCreateTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field create_time", values[i])
+			} else if value.Valid {
+				o.CreateTime = value.Time
+			}
+		case order.FieldUpdateTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field update_time", values[i])
+			} else if value.Valid {
+				o.UpdateTime = value.Time
+			}
+		case order.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				o.Name = value.String
+			}
 		default:
 			o.selectValues.Set(columns[i], values[i])
 		}
@@ -82,7 +111,15 @@ func (o *Order) Unwrap() *Order {
 func (o *Order) String() string {
 	var builder strings.Builder
 	builder.WriteString("Order(")
-	builder.WriteString(fmt.Sprintf("id=%v", o.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", o.ID))
+	builder.WriteString("create_time=")
+	builder.WriteString(o.CreateTime.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("update_time=")
+	builder.WriteString(o.UpdateTime.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(o.Name)
 	builder.WriteByte(')')
 	return builder.String()
 }

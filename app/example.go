@@ -9,7 +9,7 @@ type Example struct {
 }
 
 func (e *Example) Hello(c *gin.Context) {
-	response := commonResult.Err
-	commonResult.Result(response).Success(c, "hello", nil)
+	response := common.Err
+	common.Result(response).Success(c, "hello", nil)
 	return
 }

@@ -6,8 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ordersystem/ent/order"
 	"ordersystem/ent/predicate"
 	"sync"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -30,7 +32,10 @@ type OrderMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *int64
+	create_time   *time.Time
+	update_time   *time.Time
+	name          *string
 	clearedFields map[string]struct{}
 	done          bool
 	oldValue      func(context.Context) (*Order, error)
@@ -57,7 +62,7 @@ func newOrderMutation(c config, op Op, opts ...orderOption) *OrderMutation {
 }
 
 // withOrderID sets the ID field of the mutation.
-func withOrderID(id int) orderOption {
+func withOrderID(id int64) orderOption {
 	return func(m *OrderMutation) {
 		var (
 			err   error
@@ -107,9 +112,15 @@ func (m OrderMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Order entities.
+func (m *OrderMutation) SetID(id int64) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *OrderMutation) ID() (id int, exists bool) {
+func (m *OrderMutation) ID() (id int64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -120,12 +131,12 @@ func (m *OrderMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *OrderMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *OrderMutation) IDs(ctx context.Context) ([]int64, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []int64{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -133,6 +144,114 @@ func (m *OrderMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetCreateTime sets the "create_time" field.
+func (m *OrderMutation) SetCreateTime(t time.Time) {
+	m.create_time = &t
+}
+
+// CreateTime returns the value of the "create_time" field in the mutation.
+func (m *OrderMutation) CreateTime() (r time.Time, exists bool) {
+	v := m.create_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreateTime returns the old "create_time" field's value of the Order entity.
+// If the Order object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderMutation) OldCreateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreateTime: %w", err)
+	}
+	return oldValue.CreateTime, nil
+}
+
+// ResetCreateTime resets all changes to the "create_time" field.
+func (m *OrderMutation) ResetCreateTime() {
+	m.create_time = nil
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (m *OrderMutation) SetUpdateTime(t time.Time) {
+	m.update_time = &t
+}
+
+// UpdateTime returns the value of the "update_time" field in the mutation.
+func (m *OrderMutation) UpdateTime() (r time.Time, exists bool) {
+	v := m.update_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdateTime returns the old "update_time" field's value of the Order entity.
+// If the Order object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderMutation) OldUpdateTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdateTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdateTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdateTime: %w", err)
+	}
+	return oldValue.UpdateTime, nil
+}
+
+// ResetUpdateTime resets all changes to the "update_time" field.
+func (m *OrderMutation) ResetUpdateTime() {
+	m.update_time = nil
+}
+
+// SetName sets the "name" field.
+func (m *OrderMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *OrderMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Order entity.
+// If the Order object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *OrderMutation) ResetName() {
+	m.name = nil
 }
 
 // Where appends a list predicates to the OrderMutation builder.
@@ -169,7 +288,16 @@ func (m *OrderMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrderMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 3)
+	if m.create_time != nil {
+		fields = append(fields, order.FieldCreateTime)
+	}
+	if m.update_time != nil {
+		fields = append(fields, order.FieldUpdateTime)
+	}
+	if m.name != nil {
+		fields = append(fields, order.FieldName)
+	}
 	return fields
 }
 
@@ -177,6 +305,14 @@ func (m *OrderMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *OrderMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case order.FieldCreateTime:
+		return m.CreateTime()
+	case order.FieldUpdateTime:
+		return m.UpdateTime()
+	case order.FieldName:
+		return m.Name()
+	}
 	return nil, false
 }
 
@@ -184,6 +320,14 @@ func (m *OrderMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *OrderMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case order.FieldCreateTime:
+		return m.OldCreateTime(ctx)
+	case order.FieldUpdateTime:
+		return m.OldUpdateTime(ctx)
+	case order.FieldName:
+		return m.OldName(ctx)
+	}
 	return nil, fmt.Errorf("unknown Order field %s", name)
 }
 
@@ -192,6 +336,27 @@ func (m *OrderMutation) OldField(ctx context.Context, name string) (ent.Value, e
 // type.
 func (m *OrderMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case order.FieldCreateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreateTime(v)
+		return nil
+	case order.FieldUpdateTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdateTime(v)
+		return nil
+	case order.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Order field %s", name)
 }
@@ -213,6 +378,8 @@ func (m *OrderMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *OrderMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Order numeric field %s", name)
 }
 
@@ -238,6 +405,17 @@ func (m *OrderMutation) ClearField(name string) error {
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *OrderMutation) ResetField(name string) error {
+	switch name {
+	case order.FieldCreateTime:
+		m.ResetCreateTime()
+		return nil
+	case order.FieldUpdateTime:
+		m.ResetUpdateTime()
+		return nil
+	case order.FieldName:
+		m.ResetName()
+		return nil
+	}
 	return fmt.Errorf("unknown Order field %s", name)
 }
 

@@ -4,8 +4,10 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"ordersystem/ent/order"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -18,6 +20,54 @@ type OrderCreate struct {
 	hooks    []Hook
 }
 
+// SetCreateTime sets the "create_time" field.
+func (oc *OrderCreate) SetCreateTime(t time.Time) *OrderCreate {
+	oc.mutation.SetCreateTime(t)
+	return oc
+}
+
+// SetNillableCreateTime sets the "create_time" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableCreateTime(t *time.Time) *OrderCreate {
+	if t != nil {
+		oc.SetCreateTime(*t)
+	}
+	return oc
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (oc *OrderCreate) SetUpdateTime(t time.Time) *OrderCreate {
+	oc.mutation.SetUpdateTime(t)
+	return oc
+}
+
+// SetNillableUpdateTime sets the "update_time" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableUpdateTime(t *time.Time) *OrderCreate {
+	if t != nil {
+		oc.SetUpdateTime(*t)
+	}
+	return oc
+}
+
+// SetName sets the "name" field.
+func (oc *OrderCreate) SetName(s string) *OrderCreate {
+	oc.mutation.SetName(s)
+	return oc
+}
+
+// SetID sets the "id" field.
+func (oc *OrderCreate) SetID(i int64) *OrderCreate {
+	oc.mutation.SetID(i)
+	return oc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableID(i *int64) *OrderCreate {
+	if i != nil {
+		oc.SetID(*i)
+	}
+	return oc
+}
+
 // Mutation returns the OrderMutation object of the builder.
 func (oc *OrderCreate) Mutation() *OrderMutation {
 	return oc.mutation
@@ -25,6 +75,7 @@ func (oc *OrderCreate) Mutation() *OrderMutation {
 
 // Save creates the Order in the database.
 func (oc *OrderCreate) Save(ctx context.Context) (*Order, error) {
+	oc.defaults()
 	return withHooks(ctx, oc.sqlSave, oc.mutation, oc.hooks)
 }
 
@@ -50,8 +101,33 @@ func (oc *OrderCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (oc *OrderCreate) defaults() {
+	if _, ok := oc.mutation.CreateTime(); !ok {
+		v := order.DefaultCreateTime()
+		oc.mutation.SetCreateTime(v)
+	}
+	if _, ok := oc.mutation.UpdateTime(); !ok {
+		v := order.DefaultUpdateTime()
+		oc.mutation.SetUpdateTime(v)
+	}
+	if _, ok := oc.mutation.ID(); !ok {
+		v := order.DefaultID()
+		oc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (oc *OrderCreate) check() error {
+	if _, ok := oc.mutation.CreateTime(); !ok {
+		return &ValidationError{Name: "create_time", err: errors.New(`ent: missing required field "Order.create_time"`)}
+	}
+	if _, ok := oc.mutation.UpdateTime(); !ok {
+		return &ValidationError{Name: "update_time", err: errors.New(`ent: missing required field "Order.update_time"`)}
+	}
+	if _, ok := oc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Order.name"`)}
+	}
 	return nil
 }
 
@@ -66,8 +142,10 @@ func (oc *OrderCreate) sqlSave(ctx context.Context) (*Order, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
+	}
 	oc.mutation.id = &_node.ID
 	oc.mutation.done = true
 	return _node, nil
@@ -76,8 +154,24 @@ func (oc *OrderCreate) sqlSave(ctx context.Context) (*Order, error) {
 func (oc *OrderCreate) createSpec() (*Order, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Order{config: oc.config}
-		_spec = sqlgraph.NewCreateSpec(order.Table, sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(order.Table, sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt64))
 	)
+	if id, ok := oc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
+	if value, ok := oc.mutation.CreateTime(); ok {
+		_spec.SetField(order.FieldCreateTime, field.TypeTime, value)
+		_node.CreateTime = value
+	}
+	if value, ok := oc.mutation.UpdateTime(); ok {
+		_spec.SetField(order.FieldUpdateTime, field.TypeTime, value)
+		_node.UpdateTime = value
+	}
+	if value, ok := oc.mutation.Name(); ok {
+		_spec.SetField(order.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
 	return _node, _spec
 }
 
@@ -95,6 +189,7 @@ func (ocb *OrderCreateBulk) Save(ctx context.Context) ([]*Order, error) {
 	for i := range ocb.builders {
 		func(i int, root context.Context) {
 			builder := ocb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*OrderMutation)
 				if !ok {
@@ -121,9 +216,9 @@ func (ocb *OrderCreateBulk) Save(ctx context.Context) ([]*Order, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil

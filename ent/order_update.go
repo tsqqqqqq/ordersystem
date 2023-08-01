@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"ordersystem/ent/order"
 	"ordersystem/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,6 +28,18 @@ func (ou *OrderUpdate) Where(ps ...predicate.Order) *OrderUpdate {
 	return ou
 }
 
+// SetUpdateTime sets the "update_time" field.
+func (ou *OrderUpdate) SetUpdateTime(t time.Time) *OrderUpdate {
+	ou.mutation.SetUpdateTime(t)
+	return ou
+}
+
+// SetName sets the "name" field.
+func (ou *OrderUpdate) SetName(s string) *OrderUpdate {
+	ou.mutation.SetName(s)
+	return ou
+}
+
 // Mutation returns the OrderMutation object of the builder.
 func (ou *OrderUpdate) Mutation() *OrderMutation {
 	return ou.mutation
@@ -34,6 +47,7 @@ func (ou *OrderUpdate) Mutation() *OrderMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (ou *OrderUpdate) Save(ctx context.Context) (int, error) {
+	ou.defaults()
 	return withHooks(ctx, ou.sqlSave, ou.mutation, ou.hooks)
 }
 
@@ -59,14 +73,28 @@ func (ou *OrderUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (ou *OrderUpdate) defaults() {
+	if _, ok := ou.mutation.UpdateTime(); !ok {
+		v := order.UpdateDefaultUpdateTime()
+		ou.mutation.SetUpdateTime(v)
+	}
+}
+
 func (ou *OrderUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(order.Table, order.Columns, sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(order.Table, order.Columns, sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt64))
 	if ps := ou.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := ou.mutation.UpdateTime(); ok {
+		_spec.SetField(order.FieldUpdateTime, field.TypeTime, value)
+	}
+	if value, ok := ou.mutation.Name(); ok {
+		_spec.SetField(order.FieldName, field.TypeString, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -86,6 +114,18 @@ type OrderUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *OrderMutation
+}
+
+// SetUpdateTime sets the "update_time" field.
+func (ouo *OrderUpdateOne) SetUpdateTime(t time.Time) *OrderUpdateOne {
+	ouo.mutation.SetUpdateTime(t)
+	return ouo
+}
+
+// SetName sets the "name" field.
+func (ouo *OrderUpdateOne) SetName(s string) *OrderUpdateOne {
+	ouo.mutation.SetName(s)
+	return ouo
 }
 
 // Mutation returns the OrderMutation object of the builder.
@@ -108,6 +148,7 @@ func (ouo *OrderUpdateOne) Select(field string, fields ...string) *OrderUpdateOn
 
 // Save executes the query and returns the updated Order entity.
 func (ouo *OrderUpdateOne) Save(ctx context.Context) (*Order, error) {
+	ouo.defaults()
 	return withHooks(ctx, ouo.sqlSave, ouo.mutation, ouo.hooks)
 }
 
@@ -133,8 +174,16 @@ func (ouo *OrderUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (ouo *OrderUpdateOne) defaults() {
+	if _, ok := ouo.mutation.UpdateTime(); !ok {
+		v := order.UpdateDefaultUpdateTime()
+		ouo.mutation.SetUpdateTime(v)
+	}
+}
+
 func (ouo *OrderUpdateOne) sqlSave(ctx context.Context) (_node *Order, err error) {
-	_spec := sqlgraph.NewUpdateSpec(order.Table, order.Columns, sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(order.Table, order.Columns, sqlgraph.NewFieldSpec(order.FieldID, field.TypeInt64))
 	id, ok := ouo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Order.id" for update`)}
@@ -158,6 +207,12 @@ func (ouo *OrderUpdateOne) sqlSave(ctx context.Context) (_node *Order, err error
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := ouo.mutation.UpdateTime(); ok {
+		_spec.SetField(order.FieldUpdateTime, field.TypeTime, value)
+	}
+	if value, ok := ouo.mutation.Name(); ok {
+		_spec.SetField(order.FieldName, field.TypeString, value)
 	}
 	_node = &Order{config: ouo.config}
 	_spec.Assign = _node.assignValues

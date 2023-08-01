@@ -1,10 +1,10 @@
 package main
 
 import (
-	"backend-document/ent"
-	"backend-document/internal/pkg/db"
 	"context"
 	"log"
+	"ordersystem/ent"
+	"ordersystem/internal/pkg/db"
 )
 
 var client *ent.Client
