@@ -8,24 +8,50 @@ import (
 )
 
 var (
+	// InventoriesColumns holds the columns for the "inventories" table.
+	InventoriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "create_time", Type: field.TypeTime},
+		{Name: "update_time", Type: field.TypeTime},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString},
+		{Name: "total", Type: field.TypeInt},
+	}
+	// InventoriesTable holds the schema information for the "inventories" table.
+	InventoriesTable = &schema.Table{
+		Name:       "inventories",
+		Columns:    InventoriesColumns,
+		PrimaryKey: []*schema.Column{InventoriesColumns[0]},
+	}
 	// OrdersColumns holds the columns for the "orders" table.
 	OrdersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
+		{Name: "inventory_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// OrdersTable holds the schema information for the "orders" table.
 	OrdersTable = &schema.Table{
 		Name:       "orders",
 		Columns:    OrdersColumns,
 		PrimaryKey: []*schema.Column{OrdersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "orders_inventories_order",
+				Columns:    []*schema.Column{OrdersColumns[4]},
+				RefColumns: []*schema.Column{InventoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		InventoriesTable,
 		OrdersTable,
 	}
 )
 
 func init() {
+	OrdersTable.ForeignKeys[0].RefTable = InventoriesTable
 }

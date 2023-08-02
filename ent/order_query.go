@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"ordersystem/ent/inventory"
 	"ordersystem/ent/order"
 	"ordersystem/ent/predicate"
 
@@ -17,10 +18,11 @@ import (
 // OrderQuery is the builder for querying Order entities.
 type OrderQuery struct {
 	config
-	ctx        *QueryContext
-	order      []order.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Order
+	ctx           *QueryContext
+	order         []order.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.Order
+	withInventory *InventoryQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -55,6 +57,28 @@ func (oq *OrderQuery) Unique(unique bool) *OrderQuery {
 func (oq *OrderQuery) Order(o ...order.OrderOption) *OrderQuery {
 	oq.order = append(oq.order, o...)
 	return oq
+}
+
+// QueryInventory chains the current query on the "inventory" edge.
+func (oq *OrderQuery) QueryInventory() *InventoryQuery {
+	query := (&InventoryClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(order.Table, order.FieldID, selector),
+			sqlgraph.To(inventory.Table, inventory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, order.InventoryTable, order.InventoryColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Order entity from the query.
@@ -244,15 +268,27 @@ func (oq *OrderQuery) Clone() *OrderQuery {
 		return nil
 	}
 	return &OrderQuery{
-		config:     oq.config,
-		ctx:        oq.ctx.Clone(),
-		order:      append([]order.OrderOption{}, oq.order...),
-		inters:     append([]Interceptor{}, oq.inters...),
-		predicates: append([]predicate.Order{}, oq.predicates...),
+		config:        oq.config,
+		ctx:           oq.ctx.Clone(),
+		order:         append([]order.OrderOption{}, oq.order...),
+		inters:        append([]Interceptor{}, oq.inters...),
+		predicates:    append([]predicate.Order{}, oq.predicates...),
+		withInventory: oq.withInventory.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
 		path: oq.path,
 	}
+}
+
+// WithInventory tells the query-builder to eager-load the nodes that are connected to
+// the "inventory" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OrderQuery) WithInventory(opts ...func(*InventoryQuery)) *OrderQuery {
+	query := (&InventoryClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withInventory = query
+	return oq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -331,8 +367,11 @@ func (oq *OrderQuery) prepareQuery(ctx context.Context) error {
 
 func (oq *OrderQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Order, error) {
 	var (
-		nodes = []*Order{}
-		_spec = oq.querySpec()
+		nodes       = []*Order{}
+		_spec       = oq.querySpec()
+		loadedTypes = [1]bool{
+			oq.withInventory != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Order).scanValues(nil, columns)
@@ -340,6 +379,7 @@ func (oq *OrderQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Order,
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Order{config: oq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +391,43 @@ func (oq *OrderQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Order,
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := oq.withInventory; query != nil {
+		if err := oq.loadInventory(ctx, query, nodes, nil,
+			func(n *Order, e *Inventory) { n.Edges.Inventory = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (oq *OrderQuery) loadInventory(ctx context.Context, query *InventoryQuery, nodes []*Order, init func(*Order), assign func(*Order, *Inventory)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Order)
+	for i := range nodes {
+		fk := nodes[i].InventoryID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(inventory.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "inventory_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (oq *OrderQuery) sqlCount(ctx context.Context) (int, error) {
@@ -378,6 +454,9 @@ func (oq *OrderQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != order.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if oq.withInventory != nil {
+			_spec.Node.AddColumnOnce(order.FieldInventoryID)
 		}
 	}
 	if ps := oq.predicates; len(ps) > 0 {

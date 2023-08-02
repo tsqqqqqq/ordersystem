@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ordersystem/ent/inventory"
 	"ordersystem/ent/order"
 	"time"
 
@@ -54,6 +55,20 @@ func (oc *OrderCreate) SetName(s string) *OrderCreate {
 	return oc
 }
 
+// SetInventoryID sets the "inventory_id" field.
+func (oc *OrderCreate) SetInventoryID(i int64) *OrderCreate {
+	oc.mutation.SetInventoryID(i)
+	return oc
+}
+
+// SetNillableInventoryID sets the "inventory_id" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableInventoryID(i *int64) *OrderCreate {
+	if i != nil {
+		oc.SetInventoryID(*i)
+	}
+	return oc
+}
+
 // SetID sets the "id" field.
 func (oc *OrderCreate) SetID(i int64) *OrderCreate {
 	oc.mutation.SetID(i)
@@ -66,6 +81,11 @@ func (oc *OrderCreate) SetNillableID(i *int64) *OrderCreate {
 		oc.SetID(*i)
 	}
 	return oc
+}
+
+// SetInventory sets the "inventory" edge to the Inventory entity.
+func (oc *OrderCreate) SetInventory(i *Inventory) *OrderCreate {
+	return oc.SetInventoryID(i.ID)
 }
 
 // Mutation returns the OrderMutation object of the builder.
@@ -171,6 +191,23 @@ func (oc *OrderCreate) createSpec() (*Order, *sqlgraph.CreateSpec) {
 	if value, ok := oc.mutation.Name(); ok {
 		_spec.SetField(order.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if nodes := oc.mutation.InventoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   order.InventoryTable,
+			Columns: []string{order.InventoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(inventory.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.InventoryID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

@@ -8,6 +8,18 @@ import (
 	"ordersystem/ent"
 )
 
+// The InventoryFunc type is an adapter to allow the use of ordinary
+// function as Inventory mutator.
+type InventoryFunc func(context.Context, *ent.InventoryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f InventoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.InventoryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.InventoryMutation", m)
+}
+
 // The OrderFunc type is an adapter to allow the use of ordinary
 // function as Order mutator.
 type OrderFunc func(context.Context, *ent.OrderMutation) (ent.Value, error)

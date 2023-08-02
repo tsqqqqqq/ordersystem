@@ -10,11 +10,13 @@ import (
 
 	"ordersystem/ent/migrate"
 
+	"ordersystem/ent/inventory"
 	"ordersystem/ent/order"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -22,6 +24,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Inventory is the client for interacting with the Inventory builders.
+	Inventory *InventoryClient
 	// Order is the client for interacting with the Order builders.
 	Order *OrderClient
 }
@@ -37,6 +41,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Inventory = NewInventoryClient(c.config)
 	c.Order = NewOrderClient(c.config)
 }
 
@@ -118,9 +123,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Order:  NewOrderClient(cfg),
+		ctx:       ctx,
+		config:    cfg,
+		Inventory: NewInventoryClient(cfg),
+		Order:     NewOrderClient(cfg),
 	}, nil
 }
 
@@ -138,16 +144,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Order:  NewOrderClient(cfg),
+		ctx:       ctx,
+		config:    cfg,
+		Inventory: NewInventoryClient(cfg),
+		Order:     NewOrderClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Order.
+//		Inventory.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -169,22 +176,160 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Inventory.Use(hooks...)
 	c.Order.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Inventory.Intercept(interceptors...)
 	c.Order.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *InventoryMutation:
+		return c.Inventory.mutate(ctx, m)
 	case *OrderMutation:
 		return c.Order.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// InventoryClient is a client for the Inventory schema.
+type InventoryClient struct {
+	config
+}
+
+// NewInventoryClient returns a client for the Inventory from the given config.
+func NewInventoryClient(c config) *InventoryClient {
+	return &InventoryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `inventory.Hooks(f(g(h())))`.
+func (c *InventoryClient) Use(hooks ...Hook) {
+	c.hooks.Inventory = append(c.hooks.Inventory, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `inventory.Intercept(f(g(h())))`.
+func (c *InventoryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Inventory = append(c.inters.Inventory, interceptors...)
+}
+
+// Create returns a builder for creating a Inventory entity.
+func (c *InventoryClient) Create() *InventoryCreate {
+	mutation := newInventoryMutation(c.config, OpCreate)
+	return &InventoryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Inventory entities.
+func (c *InventoryClient) CreateBulk(builders ...*InventoryCreate) *InventoryCreateBulk {
+	return &InventoryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Inventory.
+func (c *InventoryClient) Update() *InventoryUpdate {
+	mutation := newInventoryMutation(c.config, OpUpdate)
+	return &InventoryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *InventoryClient) UpdateOne(i *Inventory) *InventoryUpdateOne {
+	mutation := newInventoryMutation(c.config, OpUpdateOne, withInventory(i))
+	return &InventoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *InventoryClient) UpdateOneID(id int64) *InventoryUpdateOne {
+	mutation := newInventoryMutation(c.config, OpUpdateOne, withInventoryID(id))
+	return &InventoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Inventory.
+func (c *InventoryClient) Delete() *InventoryDelete {
+	mutation := newInventoryMutation(c.config, OpDelete)
+	return &InventoryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *InventoryClient) DeleteOne(i *Inventory) *InventoryDeleteOne {
+	return c.DeleteOneID(i.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *InventoryClient) DeleteOneID(id int64) *InventoryDeleteOne {
+	builder := c.Delete().Where(inventory.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &InventoryDeleteOne{builder}
+}
+
+// Query returns a query builder for Inventory.
+func (c *InventoryClient) Query() *InventoryQuery {
+	return &InventoryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeInventory},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Inventory entity by its id.
+func (c *InventoryClient) Get(ctx context.Context, id int64) (*Inventory, error) {
+	return c.Query().Where(inventory.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *InventoryClient) GetX(ctx context.Context, id int64) *Inventory {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOrder queries the order edge of a Inventory.
+func (c *InventoryClient) QueryOrder(i *Inventory) *OrderQuery {
+	query := (&OrderClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(inventory.Table, inventory.FieldID, id),
+			sqlgraph.To(order.Table, order.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, inventory.OrderTable, inventory.OrderColumn),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *InventoryClient) Hooks() []Hook {
+	return c.hooks.Inventory
+}
+
+// Interceptors returns the client interceptors.
+func (c *InventoryClient) Interceptors() []Interceptor {
+	return c.inters.Inventory
+}
+
+func (c *InventoryClient) mutate(ctx context.Context, m *InventoryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&InventoryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&InventoryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&InventoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&InventoryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Inventory mutation op: %q", m.Op())
 	}
 }
 
@@ -281,6 +426,22 @@ func (c *OrderClient) GetX(ctx context.Context, id int64) *Order {
 	return obj
 }
 
+// QueryInventory queries the inventory edge of a Order.
+func (c *OrderClient) QueryInventory(o *Order) *InventoryQuery {
+	query := (&InventoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(order.Table, order.FieldID, id),
+			sqlgraph.To(inventory.Table, inventory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, order.InventoryTable, order.InventoryColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *OrderClient) Hooks() []Hook {
 	return c.hooks.Order
@@ -309,9 +470,9 @@ func (c *OrderClient) mutate(ctx context.Context, m *OrderMutation) (Value, erro
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Order []ent.Hook
+		Inventory, Order []ent.Hook
 	}
 	inters struct {
-		Order []ent.Interceptor
+		Inventory, Order []ent.Interceptor
 	}
 )

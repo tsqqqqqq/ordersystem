@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"ordersystem/ent/inventory"
 	"ordersystem/ent/order"
 	"ordersystem/ent/schema"
 	"time"
@@ -12,6 +13,25 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	inventoryMixin := schema.Inventory{}.Mixin()
+	inventoryMixinFields0 := inventoryMixin[0].Fields()
+	_ = inventoryMixinFields0
+	inventoryFields := schema.Inventory{}.Fields()
+	_ = inventoryFields
+	// inventoryDescCreateTime is the schema descriptor for create_time field.
+	inventoryDescCreateTime := inventoryMixinFields0[0].Descriptor()
+	// inventory.DefaultCreateTime holds the default value on creation for the create_time field.
+	inventory.DefaultCreateTime = inventoryDescCreateTime.Default.(func() time.Time)
+	// inventoryDescUpdateTime is the schema descriptor for update_time field.
+	inventoryDescUpdateTime := inventoryMixinFields0[1].Descriptor()
+	// inventory.DefaultUpdateTime holds the default value on creation for the update_time field.
+	inventory.DefaultUpdateTime = inventoryDescUpdateTime.Default.(func() time.Time)
+	// inventory.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
+	inventory.UpdateDefaultUpdateTime = inventoryDescUpdateTime.UpdateDefault.(func() time.Time)
+	// inventoryDescID is the schema descriptor for id field.
+	inventoryDescID := inventoryFields[0].Descriptor()
+	// inventory.DefaultID holds the default value on creation for the id field.
+	inventory.DefaultID = inventoryDescID.Default.(func() int64)
 	orderMixin := schema.Order{}.Mixin()
 	orderMixinFields0 := orderMixin[0].Fields()
 	_ = orderMixinFields0

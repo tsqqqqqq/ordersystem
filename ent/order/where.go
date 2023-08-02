@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -67,6 +68,11 @@ func UpdateTime(v time.Time) predicate.Order {
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Order {
 	return predicate.Order(sql.FieldEQ(FieldName, v))
+}
+
+// InventoryID applies equality check predicate on the "inventory_id" field. It's identical to InventoryIDEQ.
+func InventoryID(v int64) predicate.Order {
+	return predicate.Order(sql.FieldEQ(FieldInventoryID, v))
 }
 
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
@@ -212,6 +218,59 @@ func NameEqualFold(v string) predicate.Order {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.Order {
 	return predicate.Order(sql.FieldContainsFold(FieldName, v))
+}
+
+// InventoryIDEQ applies the EQ predicate on the "inventory_id" field.
+func InventoryIDEQ(v int64) predicate.Order {
+	return predicate.Order(sql.FieldEQ(FieldInventoryID, v))
+}
+
+// InventoryIDNEQ applies the NEQ predicate on the "inventory_id" field.
+func InventoryIDNEQ(v int64) predicate.Order {
+	return predicate.Order(sql.FieldNEQ(FieldInventoryID, v))
+}
+
+// InventoryIDIn applies the In predicate on the "inventory_id" field.
+func InventoryIDIn(vs ...int64) predicate.Order {
+	return predicate.Order(sql.FieldIn(FieldInventoryID, vs...))
+}
+
+// InventoryIDNotIn applies the NotIn predicate on the "inventory_id" field.
+func InventoryIDNotIn(vs ...int64) predicate.Order {
+	return predicate.Order(sql.FieldNotIn(FieldInventoryID, vs...))
+}
+
+// InventoryIDIsNil applies the IsNil predicate on the "inventory_id" field.
+func InventoryIDIsNil() predicate.Order {
+	return predicate.Order(sql.FieldIsNull(FieldInventoryID))
+}
+
+// InventoryIDNotNil applies the NotNil predicate on the "inventory_id" field.
+func InventoryIDNotNil() predicate.Order {
+	return predicate.Order(sql.FieldNotNull(FieldInventoryID))
+}
+
+// HasInventory applies the HasEdge predicate on the "inventory" edge.
+func HasInventory() predicate.Order {
+	return predicate.Order(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, InventoryTable, InventoryColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInventoryWith applies the HasEdge predicate on the "inventory" edge with a given conditions (other predicates).
+func HasInventoryWith(preds ...predicate.Inventory) predicate.Order {
+	return predicate.Order(func(s *sql.Selector) {
+		step := newInventoryStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

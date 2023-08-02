@@ -12,5 +12,7 @@ func Init() *gin.Engine {
 	Example(v1)
 	// 订单路由
 	Order(v1)
+	// 库存路由
+	Inventory(v1)
 	return route
 }

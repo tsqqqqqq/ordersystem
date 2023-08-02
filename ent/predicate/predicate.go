@@ -6,5 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Inventory is the predicate function for inventory builders.
+type Inventory func(*sql.Selector)
+
 // Order is the predicate function for order builders.
 type Order func(*sql.Selector)

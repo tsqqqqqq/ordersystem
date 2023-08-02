@@ -8,31 +8,32 @@ import (
 	"ordersystem/common"
 )
 
-// Order holds the schema definition for the Order entity.
-type Order struct {
+// Inventory holds the schema definition for the Inventory entity.
+type Inventory struct {
 	ent.Schema
 }
 
-// Fields of the Order.
-func (Order) Fields() []ent.Field {
+// Fields of the Inventory.
+func (Inventory) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id").DefaultFunc(func() int64 {
 			snow := new(common.Snowflake)
 			return snow.NextVal()
 		}),
 		field.String("name"),
-		field.Int64("inventory_id").Optional(),
+		field.String("description"),
+		field.Int("total"),
 	}
 }
 
-// Edges of the Order.
-func (Order) Edges() []ent.Edge {
+// Edges of the Inventory.
+func (Inventory) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("inventory", Inventory.Type).Ref("order").Unique().Field("inventory_id"),
+		edge.To("order", Order.Type),
 	}
 }
 
-func (Order) Mixin() []ent.Mixin {
+func (Inventory) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		mixin.Time{},
 	}

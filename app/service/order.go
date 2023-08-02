@@ -4,13 +4,10 @@ import (
 	"context"
 	"ordersystem/ent"
 	"ordersystem/internal/pkg/db"
-	"ordersystem/middleware"
 )
 
 type Order struct {
 }
-
-var logger = middleware.Logger()
 
 func (*Order) Save(data ent.Order, c context.Context) error {
 	logger.Info("Order Save")

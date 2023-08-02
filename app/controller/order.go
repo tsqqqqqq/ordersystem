@@ -10,7 +10,6 @@ import (
 type Order struct {
 }
 
-var response *common.Response
 var OrderService service.Order
 
 func (*Order) Post(c *gin.Context) {

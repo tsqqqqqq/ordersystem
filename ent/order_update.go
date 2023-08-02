@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ordersystem/ent/inventory"
 	"ordersystem/ent/order"
 	"ordersystem/ent/predicate"
 	"time"
@@ -40,9 +41,40 @@ func (ou *OrderUpdate) SetName(s string) *OrderUpdate {
 	return ou
 }
 
+// SetInventoryID sets the "inventory_id" field.
+func (ou *OrderUpdate) SetInventoryID(i int64) *OrderUpdate {
+	ou.mutation.SetInventoryID(i)
+	return ou
+}
+
+// SetNillableInventoryID sets the "inventory_id" field if the given value is not nil.
+func (ou *OrderUpdate) SetNillableInventoryID(i *int64) *OrderUpdate {
+	if i != nil {
+		ou.SetInventoryID(*i)
+	}
+	return ou
+}
+
+// ClearInventoryID clears the value of the "inventory_id" field.
+func (ou *OrderUpdate) ClearInventoryID() *OrderUpdate {
+	ou.mutation.ClearInventoryID()
+	return ou
+}
+
+// SetInventory sets the "inventory" edge to the Inventory entity.
+func (ou *OrderUpdate) SetInventory(i *Inventory) *OrderUpdate {
+	return ou.SetInventoryID(i.ID)
+}
+
 // Mutation returns the OrderMutation object of the builder.
 func (ou *OrderUpdate) Mutation() *OrderMutation {
 	return ou.mutation
+}
+
+// ClearInventory clears the "inventory" edge to the Inventory entity.
+func (ou *OrderUpdate) ClearInventory() *OrderUpdate {
+	ou.mutation.ClearInventory()
+	return ou
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -96,6 +128,35 @@ func (ou *OrderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ou.mutation.Name(); ok {
 		_spec.SetField(order.FieldName, field.TypeString, value)
 	}
+	if ou.mutation.InventoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   order.InventoryTable,
+			Columns: []string{order.InventoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(inventory.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.InventoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   order.InventoryTable,
+			Columns: []string{order.InventoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(inventory.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{order.Label}
@@ -128,9 +189,40 @@ func (ouo *OrderUpdateOne) SetName(s string) *OrderUpdateOne {
 	return ouo
 }
 
+// SetInventoryID sets the "inventory_id" field.
+func (ouo *OrderUpdateOne) SetInventoryID(i int64) *OrderUpdateOne {
+	ouo.mutation.SetInventoryID(i)
+	return ouo
+}
+
+// SetNillableInventoryID sets the "inventory_id" field if the given value is not nil.
+func (ouo *OrderUpdateOne) SetNillableInventoryID(i *int64) *OrderUpdateOne {
+	if i != nil {
+		ouo.SetInventoryID(*i)
+	}
+	return ouo
+}
+
+// ClearInventoryID clears the value of the "inventory_id" field.
+func (ouo *OrderUpdateOne) ClearInventoryID() *OrderUpdateOne {
+	ouo.mutation.ClearInventoryID()
+	return ouo
+}
+
+// SetInventory sets the "inventory" edge to the Inventory entity.
+func (ouo *OrderUpdateOne) SetInventory(i *Inventory) *OrderUpdateOne {
+	return ouo.SetInventoryID(i.ID)
+}
+
 // Mutation returns the OrderMutation object of the builder.
 func (ouo *OrderUpdateOne) Mutation() *OrderMutation {
 	return ouo.mutation
+}
+
+// ClearInventory clears the "inventory" edge to the Inventory entity.
+func (ouo *OrderUpdateOne) ClearInventory() *OrderUpdateOne {
+	ouo.mutation.ClearInventory()
+	return ouo
 }
 
 // Where appends a list predicates to the OrderUpdate builder.
@@ -213,6 +305,35 @@ func (ouo *OrderUpdateOne) sqlSave(ctx context.Context) (_node *Order, err error
 	}
 	if value, ok := ouo.mutation.Name(); ok {
 		_spec.SetField(order.FieldName, field.TypeString, value)
+	}
+	if ouo.mutation.InventoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   order.InventoryTable,
+			Columns: []string{order.InventoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(inventory.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.InventoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   order.InventoryTable,
+			Columns: []string{order.InventoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(inventory.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Order{config: ouo.config}
 	_spec.Assign = _node.assignValues

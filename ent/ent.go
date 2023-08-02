@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ordersystem/ent/inventory"
 	"ordersystem/ent/order"
 	"reflect"
 	"sync"
@@ -73,7 +74,8 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			order.Table: order.ValidColumn,
+			inventory.Table: inventory.ValidColumn,
+			order.Table:     order.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)
