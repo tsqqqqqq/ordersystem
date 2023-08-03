@@ -2,15 +2,12 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"ordersystem/app/service"
 	"ordersystem/common"
 	"ordersystem/ent"
 )
 
 type Inventory struct {
 }
-
-var InventoryService service.InventoryService
 
 func (*Inventory) Post(c *gin.Context) {
 	var inventory ent.Inventory

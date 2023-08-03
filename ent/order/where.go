@@ -75,6 +75,16 @@ func InventoryID(v int64) predicate.Order {
 	return predicate.Order(sql.FieldEQ(FieldInventoryID, v))
 }
 
+// Count applies equality check predicate on the "count" field. It's identical to CountEQ.
+func Count(v int) predicate.Order {
+	return predicate.Order(sql.FieldEQ(FieldCount, v))
+}
+
+// Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
+func Status(v int) predicate.Order {
+	return predicate.Order(sql.FieldEQ(FieldStatus, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.Order {
 	return predicate.Order(sql.FieldEQ(FieldCreateTime, v))
@@ -248,6 +258,86 @@ func InventoryIDIsNil() predicate.Order {
 // InventoryIDNotNil applies the NotNil predicate on the "inventory_id" field.
 func InventoryIDNotNil() predicate.Order {
 	return predicate.Order(sql.FieldNotNull(FieldInventoryID))
+}
+
+// CountEQ applies the EQ predicate on the "count" field.
+func CountEQ(v int) predicate.Order {
+	return predicate.Order(sql.FieldEQ(FieldCount, v))
+}
+
+// CountNEQ applies the NEQ predicate on the "count" field.
+func CountNEQ(v int) predicate.Order {
+	return predicate.Order(sql.FieldNEQ(FieldCount, v))
+}
+
+// CountIn applies the In predicate on the "count" field.
+func CountIn(vs ...int) predicate.Order {
+	return predicate.Order(sql.FieldIn(FieldCount, vs...))
+}
+
+// CountNotIn applies the NotIn predicate on the "count" field.
+func CountNotIn(vs ...int) predicate.Order {
+	return predicate.Order(sql.FieldNotIn(FieldCount, vs...))
+}
+
+// CountGT applies the GT predicate on the "count" field.
+func CountGT(v int) predicate.Order {
+	return predicate.Order(sql.FieldGT(FieldCount, v))
+}
+
+// CountGTE applies the GTE predicate on the "count" field.
+func CountGTE(v int) predicate.Order {
+	return predicate.Order(sql.FieldGTE(FieldCount, v))
+}
+
+// CountLT applies the LT predicate on the "count" field.
+func CountLT(v int) predicate.Order {
+	return predicate.Order(sql.FieldLT(FieldCount, v))
+}
+
+// CountLTE applies the LTE predicate on the "count" field.
+func CountLTE(v int) predicate.Order {
+	return predicate.Order(sql.FieldLTE(FieldCount, v))
+}
+
+// StatusEQ applies the EQ predicate on the "status" field.
+func StatusEQ(v int) predicate.Order {
+	return predicate.Order(sql.FieldEQ(FieldStatus, v))
+}
+
+// StatusNEQ applies the NEQ predicate on the "status" field.
+func StatusNEQ(v int) predicate.Order {
+	return predicate.Order(sql.FieldNEQ(FieldStatus, v))
+}
+
+// StatusIn applies the In predicate on the "status" field.
+func StatusIn(vs ...int) predicate.Order {
+	return predicate.Order(sql.FieldIn(FieldStatus, vs...))
+}
+
+// StatusNotIn applies the NotIn predicate on the "status" field.
+func StatusNotIn(vs ...int) predicate.Order {
+	return predicate.Order(sql.FieldNotIn(FieldStatus, vs...))
+}
+
+// StatusGT applies the GT predicate on the "status" field.
+func StatusGT(v int) predicate.Order {
+	return predicate.Order(sql.FieldGT(FieldStatus, v))
+}
+
+// StatusGTE applies the GTE predicate on the "status" field.
+func StatusGTE(v int) predicate.Order {
+	return predicate.Order(sql.FieldGTE(FieldStatus, v))
+}
+
+// StatusLT applies the LT predicate on the "status" field.
+func StatusLT(v int) predicate.Order {
+	return predicate.Order(sql.FieldLT(FieldStatus, v))
+}
+
+// StatusLTE applies the LTE predicate on the "status" field.
+func StatusLTE(v int) predicate.Order {
+	return predicate.Order(sql.FieldLTE(FieldStatus, v))
 }
 
 // HasInventory applies the HasEdge predicate on the "inventory" edge.

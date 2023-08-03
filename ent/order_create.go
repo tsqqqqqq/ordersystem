@@ -69,6 +69,34 @@ func (oc *OrderCreate) SetNillableInventoryID(i *int64) *OrderCreate {
 	return oc
 }
 
+// SetCount sets the "count" field.
+func (oc *OrderCreate) SetCount(i int) *OrderCreate {
+	oc.mutation.SetCount(i)
+	return oc
+}
+
+// SetNillableCount sets the "count" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableCount(i *int) *OrderCreate {
+	if i != nil {
+		oc.SetCount(*i)
+	}
+	return oc
+}
+
+// SetStatus sets the "status" field.
+func (oc *OrderCreate) SetStatus(i int) *OrderCreate {
+	oc.mutation.SetStatus(i)
+	return oc
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (oc *OrderCreate) SetNillableStatus(i *int) *OrderCreate {
+	if i != nil {
+		oc.SetStatus(*i)
+	}
+	return oc
+}
+
 // SetID sets the "id" field.
 func (oc *OrderCreate) SetID(i int64) *OrderCreate {
 	oc.mutation.SetID(i)
@@ -131,6 +159,14 @@ func (oc *OrderCreate) defaults() {
 		v := order.DefaultUpdateTime()
 		oc.mutation.SetUpdateTime(v)
 	}
+	if _, ok := oc.mutation.Count(); !ok {
+		v := order.DefaultCount
+		oc.mutation.SetCount(v)
+	}
+	if _, ok := oc.mutation.Status(); !ok {
+		v := order.DefaultStatus
+		oc.mutation.SetStatus(v)
+	}
 	if _, ok := oc.mutation.ID(); !ok {
 		v := order.DefaultID()
 		oc.mutation.SetID(v)
@@ -147,6 +183,12 @@ func (oc *OrderCreate) check() error {
 	}
 	if _, ok := oc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Order.name"`)}
+	}
+	if _, ok := oc.mutation.Count(); !ok {
+		return &ValidationError{Name: "count", err: errors.New(`ent: missing required field "Order.count"`)}
+	}
+	if _, ok := oc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Order.status"`)}
 	}
 	return nil
 }
@@ -191,6 +233,14 @@ func (oc *OrderCreate) createSpec() (*Order, *sqlgraph.CreateSpec) {
 	if value, ok := oc.mutation.Name(); ok {
 		_spec.SetField(order.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := oc.mutation.Count(); ok {
+		_spec.SetField(order.FieldCount, field.TypeInt, value)
+		_node.Count = value
+	}
+	if value, ok := oc.mutation.Status(); ok {
+		_spec.SetField(order.FieldStatus, field.TypeInt, value)
+		_node.Status = value
 	}
 	if nodes := oc.mutation.InventoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

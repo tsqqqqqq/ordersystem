@@ -11,6 +11,7 @@ import (
 	"ordersystem/ent/order"
 	"ordersystem/ent/predicate"
 
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -24,6 +25,7 @@ type InventoryQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Inventory
 	withOrder  *OrderQuery
+	modifiers  []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -383,6 +385,9 @@ func (iq *InventoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*In
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
+	if len(iq.modifiers) > 0 {
+		_spec.Modifiers = iq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -435,6 +440,9 @@ func (iq *InventoryQuery) loadOrder(ctx context.Context, query *OrderQuery, node
 
 func (iq *InventoryQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := iq.querySpec()
+	if len(iq.modifiers) > 0 {
+		_spec.Modifiers = iq.modifiers
+	}
 	_spec.Node.Columns = iq.ctx.Fields
 	if len(iq.ctx.Fields) > 0 {
 		_spec.Unique = iq.ctx.Unique != nil && *iq.ctx.Unique
@@ -497,6 +505,9 @@ func (iq *InventoryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if iq.ctx.Unique != nil && *iq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range iq.modifiers {
+		m(selector)
+	}
 	for _, p := range iq.predicates {
 		p(selector)
 	}
@@ -512,6 +523,32 @@ func (iq *InventoryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// ForUpdate locks the selected rows against concurrent updates, and prevent them from being
+// updated, deleted or "selected ... for update" by other sessions, until the transaction is
+// either committed or rolled-back.
+func (iq *InventoryQuery) ForUpdate(opts ...sql.LockOption) *InventoryQuery {
+	if iq.driver.Dialect() == dialect.Postgres {
+		iq.Unique(false)
+	}
+	iq.modifiers = append(iq.modifiers, func(s *sql.Selector) {
+		s.ForUpdate(opts...)
+	})
+	return iq
+}
+
+// ForShare behaves similarly to ForUpdate, except that it acquires a shared mode lock
+// on any rows that are read. Other sessions can read the rows, but cannot modify them
+// until your transaction commits.
+func (iq *InventoryQuery) ForShare(opts ...sql.LockOption) *InventoryQuery {
+	if iq.driver.Dialect() == dialect.Postgres {
+		iq.Unique(false)
+	}
+	iq.modifiers = append(iq.modifiers, func(s *sql.Selector) {
+		s.ForShare(opts...)
+	})
+	return iq
 }
 
 // InventoryGroupBy is the group-by builder for Inventory entities.

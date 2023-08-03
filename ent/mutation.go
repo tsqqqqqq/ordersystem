@@ -715,6 +715,10 @@ type OrderMutation struct {
 	create_time      *time.Time
 	update_time      *time.Time
 	name             *string
+	count            *int
+	addcount         *int
+	status           *int
+	addstatus        *int
 	clearedFields    map[string]struct{}
 	inventory        *int64
 	clearedinventory bool
@@ -984,6 +988,118 @@ func (m *OrderMutation) ResetInventoryID() {
 	delete(m.clearedFields, order.FieldInventoryID)
 }
 
+// SetCount sets the "count" field.
+func (m *OrderMutation) SetCount(i int) {
+	m.count = &i
+	m.addcount = nil
+}
+
+// Count returns the value of the "count" field in the mutation.
+func (m *OrderMutation) Count() (r int, exists bool) {
+	v := m.count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCount returns the old "count" field's value of the Order entity.
+// If the Order object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderMutation) OldCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCount: %w", err)
+	}
+	return oldValue.Count, nil
+}
+
+// AddCount adds i to the "count" field.
+func (m *OrderMutation) AddCount(i int) {
+	if m.addcount != nil {
+		*m.addcount += i
+	} else {
+		m.addcount = &i
+	}
+}
+
+// AddedCount returns the value that was added to the "count" field in this mutation.
+func (m *OrderMutation) AddedCount() (r int, exists bool) {
+	v := m.addcount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCount resets all changes to the "count" field.
+func (m *OrderMutation) ResetCount() {
+	m.count = nil
+	m.addcount = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *OrderMutation) SetStatus(i int) {
+	m.status = &i
+	m.addstatus = nil
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *OrderMutation) Status() (r int, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Order entity.
+// If the Order object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrderMutation) OldStatus(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// AddStatus adds i to the "status" field.
+func (m *OrderMutation) AddStatus(i int) {
+	if m.addstatus != nil {
+		*m.addstatus += i
+	} else {
+		m.addstatus = &i
+	}
+}
+
+// AddedStatus returns the value that was added to the "status" field in this mutation.
+func (m *OrderMutation) AddedStatus() (r int, exists bool) {
+	v := m.addstatus
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *OrderMutation) ResetStatus() {
+	m.status = nil
+	m.addstatus = nil
+}
+
 // ClearInventory clears the "inventory" edge to the Inventory entity.
 func (m *OrderMutation) ClearInventory() {
 	m.clearedinventory = true
@@ -1044,7 +1160,7 @@ func (m *OrderMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrderMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 6)
 	if m.create_time != nil {
 		fields = append(fields, order.FieldCreateTime)
 	}
@@ -1056,6 +1172,12 @@ func (m *OrderMutation) Fields() []string {
 	}
 	if m.inventory != nil {
 		fields = append(fields, order.FieldInventoryID)
+	}
+	if m.count != nil {
+		fields = append(fields, order.FieldCount)
+	}
+	if m.status != nil {
+		fields = append(fields, order.FieldStatus)
 	}
 	return fields
 }
@@ -1073,6 +1195,10 @@ func (m *OrderMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case order.FieldInventoryID:
 		return m.InventoryID()
+	case order.FieldCount:
+		return m.Count()
+	case order.FieldStatus:
+		return m.Status()
 	}
 	return nil, false
 }
@@ -1090,6 +1216,10 @@ func (m *OrderMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldName(ctx)
 	case order.FieldInventoryID:
 		return m.OldInventoryID(ctx)
+	case order.FieldCount:
+		return m.OldCount(ctx)
+	case order.FieldStatus:
+		return m.OldStatus(ctx)
 	}
 	return nil, fmt.Errorf("unknown Order field %s", name)
 }
@@ -1127,6 +1257,20 @@ func (m *OrderMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetInventoryID(v)
 		return nil
+	case order.FieldCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCount(v)
+		return nil
+	case order.FieldStatus:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Order field %s", name)
 }
@@ -1135,6 +1279,12 @@ func (m *OrderMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *OrderMutation) AddedFields() []string {
 	var fields []string
+	if m.addcount != nil {
+		fields = append(fields, order.FieldCount)
+	}
+	if m.addstatus != nil {
+		fields = append(fields, order.FieldStatus)
+	}
 	return fields
 }
 
@@ -1143,6 +1293,10 @@ func (m *OrderMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *OrderMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case order.FieldCount:
+		return m.AddedCount()
+	case order.FieldStatus:
+		return m.AddedStatus()
 	}
 	return nil, false
 }
@@ -1152,6 +1306,20 @@ func (m *OrderMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *OrderMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case order.FieldCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCount(v)
+		return nil
+	case order.FieldStatus:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStatus(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Order numeric field %s", name)
 }
@@ -1199,6 +1367,12 @@ func (m *OrderMutation) ResetField(name string) error {
 		return nil
 	case order.FieldInventoryID:
 		m.ResetInventoryID()
+		return nil
+	case order.FieldCount:
+		m.ResetCount()
+		return nil
+	case order.FieldStatus:
+		m.ResetStatus()
 		return nil
 	}
 	return fmt.Errorf("unknown Order field %s", name)

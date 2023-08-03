@@ -29,6 +29,8 @@ var (
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
 		{Name: "name", Type: field.TypeString},
+		{Name: "count", Type: field.TypeInt, Default: 0},
+		{Name: "status", Type: field.TypeInt, Default: 0},
 		{Name: "inventory_id", Type: field.TypeInt64, Nullable: true},
 	}
 	// OrdersTable holds the schema information for the "orders" table.
@@ -39,7 +41,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "orders_inventories_order",
-				Columns:    []*schema.Column{OrdersColumns[4]},
+				Columns:    []*schema.Column{OrdersColumns[6]},
 				RefColumns: []*schema.Column{InventoriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

@@ -61,6 +61,48 @@ func (ou *OrderUpdate) ClearInventoryID() *OrderUpdate {
 	return ou
 }
 
+// SetCount sets the "count" field.
+func (ou *OrderUpdate) SetCount(i int) *OrderUpdate {
+	ou.mutation.ResetCount()
+	ou.mutation.SetCount(i)
+	return ou
+}
+
+// SetNillableCount sets the "count" field if the given value is not nil.
+func (ou *OrderUpdate) SetNillableCount(i *int) *OrderUpdate {
+	if i != nil {
+		ou.SetCount(*i)
+	}
+	return ou
+}
+
+// AddCount adds i to the "count" field.
+func (ou *OrderUpdate) AddCount(i int) *OrderUpdate {
+	ou.mutation.AddCount(i)
+	return ou
+}
+
+// SetStatus sets the "status" field.
+func (ou *OrderUpdate) SetStatus(i int) *OrderUpdate {
+	ou.mutation.ResetStatus()
+	ou.mutation.SetStatus(i)
+	return ou
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (ou *OrderUpdate) SetNillableStatus(i *int) *OrderUpdate {
+	if i != nil {
+		ou.SetStatus(*i)
+	}
+	return ou
+}
+
+// AddStatus adds i to the "status" field.
+func (ou *OrderUpdate) AddStatus(i int) *OrderUpdate {
+	ou.mutation.AddStatus(i)
+	return ou
+}
+
 // SetInventory sets the "inventory" edge to the Inventory entity.
 func (ou *OrderUpdate) SetInventory(i *Inventory) *OrderUpdate {
 	return ou.SetInventoryID(i.ID)
@@ -127,6 +169,18 @@ func (ou *OrderUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ou.mutation.Name(); ok {
 		_spec.SetField(order.FieldName, field.TypeString, value)
+	}
+	if value, ok := ou.mutation.Count(); ok {
+		_spec.SetField(order.FieldCount, field.TypeInt, value)
+	}
+	if value, ok := ou.mutation.AddedCount(); ok {
+		_spec.AddField(order.FieldCount, field.TypeInt, value)
+	}
+	if value, ok := ou.mutation.Status(); ok {
+		_spec.SetField(order.FieldStatus, field.TypeInt, value)
+	}
+	if value, ok := ou.mutation.AddedStatus(); ok {
+		_spec.AddField(order.FieldStatus, field.TypeInt, value)
 	}
 	if ou.mutation.InventoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -206,6 +260,48 @@ func (ouo *OrderUpdateOne) SetNillableInventoryID(i *int64) *OrderUpdateOne {
 // ClearInventoryID clears the value of the "inventory_id" field.
 func (ouo *OrderUpdateOne) ClearInventoryID() *OrderUpdateOne {
 	ouo.mutation.ClearInventoryID()
+	return ouo
+}
+
+// SetCount sets the "count" field.
+func (ouo *OrderUpdateOne) SetCount(i int) *OrderUpdateOne {
+	ouo.mutation.ResetCount()
+	ouo.mutation.SetCount(i)
+	return ouo
+}
+
+// SetNillableCount sets the "count" field if the given value is not nil.
+func (ouo *OrderUpdateOne) SetNillableCount(i *int) *OrderUpdateOne {
+	if i != nil {
+		ouo.SetCount(*i)
+	}
+	return ouo
+}
+
+// AddCount adds i to the "count" field.
+func (ouo *OrderUpdateOne) AddCount(i int) *OrderUpdateOne {
+	ouo.mutation.AddCount(i)
+	return ouo
+}
+
+// SetStatus sets the "status" field.
+func (ouo *OrderUpdateOne) SetStatus(i int) *OrderUpdateOne {
+	ouo.mutation.ResetStatus()
+	ouo.mutation.SetStatus(i)
+	return ouo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (ouo *OrderUpdateOne) SetNillableStatus(i *int) *OrderUpdateOne {
+	if i != nil {
+		ouo.SetStatus(*i)
+	}
+	return ouo
+}
+
+// AddStatus adds i to the "status" field.
+func (ouo *OrderUpdateOne) AddStatus(i int) *OrderUpdateOne {
+	ouo.mutation.AddStatus(i)
 	return ouo
 }
 
@@ -305,6 +401,18 @@ func (ouo *OrderUpdateOne) sqlSave(ctx context.Context) (_node *Order, err error
 	}
 	if value, ok := ouo.mutation.Name(); ok {
 		_spec.SetField(order.FieldName, field.TypeString, value)
+	}
+	if value, ok := ouo.mutation.Count(); ok {
+		_spec.SetField(order.FieldCount, field.TypeInt, value)
+	}
+	if value, ok := ouo.mutation.AddedCount(); ok {
+		_spec.AddField(order.FieldCount, field.TypeInt, value)
+	}
+	if value, ok := ouo.mutation.Status(); ok {
+		_spec.SetField(order.FieldStatus, field.TypeInt, value)
+	}
+	if value, ok := ouo.mutation.AddedStatus(); ok {
+		_spec.AddField(order.FieldStatus, field.TypeInt, value)
 	}
 	if ouo.mutation.InventoryCleared() {
 		edge := &sqlgraph.EdgeSpec{

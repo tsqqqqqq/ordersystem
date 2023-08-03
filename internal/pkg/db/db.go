@@ -1,12 +1,14 @@
 package db
 
 import (
+	"entgo.io/ent/dialect/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"gopkg.in/yaml.v3"
 	"ordersystem/ent"
 	"os"
 	"sync"
+	"time"
 )
 
 type db_client struct {
@@ -43,11 +45,16 @@ func NewDb() (*ent.Client, error) {
 	var returnChan error
 
 	Db.Do(func() {
-		client, err := ent.Open("mysql", c.getConnectionString())
+		drv, err := sql.Open("mysql", c.getConnectionString())
 		if err != nil {
 			returnChan = err
 		}
-		Db.Session = client
+		// 获取数据库驱动中的sql.DB对象。
+		db := drv.DB()
+		db.SetMaxIdleConns(10)
+		db.SetMaxOpenConns(100)
+		db.SetConnMaxLifetime(time.Hour)
+		Db.Session = ent.NewClient(ent.Driver(drv))
 	})
 	if returnChan != nil {
 		return nil, returnChan

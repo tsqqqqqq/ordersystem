@@ -26,6 +26,10 @@ type Order struct {
 	Name string `json:"name,omitempty"`
 	// InventoryID holds the value of the "inventory_id" field.
 	InventoryID int64 `json:"inventory_id,omitempty"`
+	// buy count
+	Count int `json:"count,omitempty"`
+	// order status, 0: unprocessed, 1: processed, -1: canceled, -2: failed
+	Status int `json:"status,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrderQuery when eager-loading is set.
 	Edges        OrderEdges `json:"edges"`
@@ -59,7 +63,7 @@ func (*Order) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case order.FieldID, order.FieldInventoryID:
+		case order.FieldID, order.FieldInventoryID, order.FieldCount, order.FieldStatus:
 			values[i] = new(sql.NullInt64)
 		case order.FieldName:
 			values[i] = new(sql.NullString)
@@ -109,6 +113,18 @@ func (o *Order) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field inventory_id", values[i])
 			} else if value.Valid {
 				o.InventoryID = value.Int64
+			}
+		case order.FieldCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field count", values[i])
+			} else if value.Valid {
+				o.Count = int(value.Int64)
+			}
+		case order.FieldStatus:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				o.Status = int(value.Int64)
 			}
 		default:
 			o.selectValues.Set(columns[i], values[i])
@@ -162,6 +178,12 @@ func (o *Order) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("inventory_id=")
 	builder.WriteString(fmt.Sprintf("%v", o.InventoryID))
+	builder.WriteString(", ")
+	builder.WriteString("count=")
+	builder.WriteString(fmt.Sprintf("%v", o.Count))
+	builder.WriteString(", ")
+	builder.WriteString("status=")
+	builder.WriteString(fmt.Sprintf("%v", o.Status))
 	builder.WriteByte(')')
 	return builder.String()
 }

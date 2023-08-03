@@ -47,6 +47,14 @@ func init() {
 	order.DefaultUpdateTime = orderDescUpdateTime.Default.(func() time.Time)
 	// order.UpdateDefaultUpdateTime holds the default value on update for the update_time field.
 	order.UpdateDefaultUpdateTime = orderDescUpdateTime.UpdateDefault.(func() time.Time)
+	// orderDescCount is the schema descriptor for count field.
+	orderDescCount := orderFields[3].Descriptor()
+	// order.DefaultCount holds the default value on creation for the count field.
+	order.DefaultCount = orderDescCount.Default.(int)
+	// orderDescStatus is the schema descriptor for status field.
+	orderDescStatus := orderFields[4].Descriptor()
+	// order.DefaultStatus holds the default value on creation for the status field.
+	order.DefaultStatus = orderDescStatus.Default.(int)
 	// orderDescID is the schema descriptor for id field.
 	orderDescID := orderFields[0].Descriptor()
 	// order.DefaultID holds the default value on creation for the id field.

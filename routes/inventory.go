@@ -5,8 +5,8 @@ import (
 	"ordersystem/app/controller"
 )
 
-var inventoryControler *controller.Inventory
+var inventoryController *controller.Inventory
 
-func Inventory(g *gin.RouterGroup) {
-	g.POST("/inventory", inventoryControler.Post)
+func Inventory(route *gin.RouterGroup) {
+	route.POST("/inventory", inventoryController.Post)
 }

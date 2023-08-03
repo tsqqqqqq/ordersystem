@@ -22,6 +22,8 @@ func (Order) Fields() []ent.Field {
 		}),
 		field.String("name"),
 		field.Int64("inventory_id").Optional(),
+		field.Int("count").Default(0).Comment("buy count"),
+		field.Int("status").Default(0).Comment("order status, 0: unprocessed, 1: processed, -1: canceled, -2: failed"),
 	}
 }
 

@@ -22,6 +22,10 @@ const (
 	FieldName = "name"
 	// FieldInventoryID holds the string denoting the inventory_id field in the database.
 	FieldInventoryID = "inventory_id"
+	// FieldCount holds the string denoting the count field in the database.
+	FieldCount = "count"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
 	// EdgeInventory holds the string denoting the inventory edge name in mutations.
 	EdgeInventory = "inventory"
 	// Table holds the table name of the order in the database.
@@ -42,6 +46,8 @@ var Columns = []string{
 	FieldUpdateTime,
 	FieldName,
 	FieldInventoryID,
+	FieldCount,
+	FieldStatus,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -61,6 +67,10 @@ var (
 	DefaultUpdateTime func() time.Time
 	// UpdateDefaultUpdateTime holds the default value on update for the "update_time" field.
 	UpdateDefaultUpdateTime func() time.Time
+	// DefaultCount holds the default value on creation for the "count" field.
+	DefaultCount int
+	// DefaultStatus holds the default value on creation for the "status" field.
+	DefaultStatus int
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() int64
 )
@@ -91,6 +101,16 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByInventoryID orders the results by the inventory_id field.
 func ByInventoryID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldInventoryID, opts...).ToFunc()
+}
+
+// ByCount orders the results by the count field.
+func ByCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCount, opts...).ToFunc()
+}
+
+// ByStatus orders the results by the status field.
+func ByStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
 // ByInventoryField orders the results by inventory field.
