@@ -3,6 +3,7 @@ package main
 import (
 	"ordersystem/ent"
 	"ordersystem/internal/pkg/db"
+	"ordersystem/internal/pkg/redis"
 	"ordersystem/middleware"
 	"ordersystem/routes"
 )
@@ -27,6 +28,11 @@ func main() {
 			return
 		}
 	}(db.Db.Session)
+
+	_, err = redis.NewClient()
+	if err != nil {
+		return
+	}
 
 	// Run the server
 	logger.Info("Running server...")

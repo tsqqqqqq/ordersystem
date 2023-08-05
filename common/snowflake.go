@@ -1,7 +1,10 @@
 package common
 
 import (
+	"context"
+	"ordersystem/internal/pkg/redis"
 	"ordersystem/middleware"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -17,10 +20,10 @@ type Snowflake struct {
 }
 
 const (
-	epoch             = int64(1577808000000)                           // 设置起始时间(时间戳/毫秒)：2020-01-01 00:00:00，有效期69年
+	epoch             = int64(1640966400000)                           // 设置起始时间(时间戳/毫秒)：2020-01-01 00:00:00，有效期69年
 	timestampBits     = uint(41)                                       // 时间戳占用位数
 	datacenteridBits  = uint(2)                                        // 数据中心id所占位数
-	workeridBits      = uint(7)                                        // 机器id所占位数
+	workeridBits      = uint(10)                                       // 机器id所占位数
 	sequenceBits      = uint(12)                                       // 序列所占的位数
 	timestampMax      = int64(-1 ^ (-1 << timestampBits))              // 时间戳最大值
 	datacenteridMax   = int64(-1 ^ (-1 << datacenteridBits))           // 支持的最大数据中心id数量
@@ -29,6 +32,10 @@ const (
 	workeridShift     = sequenceBits                                   // 机器id左移位数
 	datacenteridShift = sequenceBits + workeridBits                    // 数据中心id左移位数
 	timestampShift    = sequenceBits + workeridBits + datacenteridBits // 时间戳左移位数
+)
+
+var (
+	ctx = context.Background()
 )
 
 func (s *Snowflake) NextVal() int64 {
@@ -55,6 +62,30 @@ func (s *Snowflake) NextVal() int64 {
 		return 0
 	}
 	s.timestamp = now
+	// redis 缓存workerid 保证雪花算法的唯一性
+	redis_workerid, err := strconv.Atoi(redis.Redis_client.Client.Get(ctx, "workerid").Val())
+	if err != nil {
+		logger.Error("get workerid fail: ", err)
+		s.workerid = 0
+	} else {
+		s.workerid = int64(redis_workerid) + 1
+	}
+	if s.workerid > workeridMax {
+		err := redis.Redis_client.Client.Set(ctx, "workerid", 1, 0).Err()
+		if err != nil {
+			s.Unlock()
+			logger.Error("set workerid fail: ", err)
+			return 0
+		}
+	}
+	defer func() {
+		err := redis.Redis_client.Client.Set(ctx, "workerid", s.workerid, 0).Err()
+		if err != nil {
+			logger.Error("set workerid fail: ", err)
+		}
+	}()
+	//s.workerid = strconv.Atoi(redis.Redis_client.Client.Get(ctx, "workerid").Val()) + 1
+	s.datacenterid = (s.datacenterid + 1) & datacenteridMax
 	r := int64((t)<<timestampShift | (s.datacenterid << datacenteridShift) | (s.workerid << workeridShift) | (s.sequence))
 	s.Unlock()
 	return r

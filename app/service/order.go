@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"errors"
+	"entgo.io/ent/dialect/sql"
 )
 
 type Order struct {
@@ -13,23 +13,23 @@ type OrderInfo struct {
 	Count       int   `json:"count"`        // buy count
 }
 
+var (
+	ctx = context.Background()
+)
+
+// Save
+// 创建订单信息，保存到数据库。 更新库存信息。
 func (*Order) Save(data OrderInfo, c context.Context) error {
 	logger.Info("Order Save")
-	// TODO First, check if the inventory has enough stock
-	var is InventoryService
+	var inventoryService InventoryService
 	// Get current inventory information
-	inventory, err, tx := is.GetByIdForTx(data.InventoryId, c)
+	inventory, err, tx := inventoryService.GetByIdForTx(data.InventoryId, c)
 	if err != nil {
 		logger.Error("inventory not found ", err)
 		return err
 	}
+	// close transaction
 	defer tx.Commit()
-	// check if inventory has enough stock
-	if inventory.Total < data.Count {
-		logger.Error("inventory not enough stock ", err)
-		return errors.New("inventory not enough stock")
-	}
-	logger.Info("update inventory success", inventory.String())
 	// create order
 	order, err := tx.Order.Create().
 		SetInventory(inventory).
@@ -37,13 +37,20 @@ func (*Order) Save(data OrderInfo, c context.Context) error {
 		SetCount(data.Count).
 		Save(c)
 	if err != nil {
+		tx.Rollback()
 		logger.Error("create order fail: ", err)
 		return err
 	}
 	logger.Info("create order success", order.String())
+	// TODO 需要修改为订单支付成功后才更新库存
 	// update inventory total
-	inventory, err = inventory.Update().SetTotal(inventory.Total - data.Count).Save(c)
+	inventory, err = inventory.Update().SetTotal(inventory.Total - data.Count).Where(
+		func(selector *sql.Selector) {
+			selector.Where(sql.ExprP("total - ? > 0", data.Count))
+		},
+	).Save(c)
 	if err != nil {
+		tx.Rollback()
 		logger.Error("update inventory fail: ", err)
 		return err
 	}
