@@ -14,19 +14,19 @@ import (
 
 // Inventory is the model entity for the Inventory schema.
 type Inventory struct {
-	config `json:"-"`
+	config `json:"-" redis:"-"`
 	// ID of the ent.
-	ID int64 `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty" redis:"id"`
 	// CreateTime holds the value of the "create_time" field.
 	CreateTime time.Time `json:"create_time,omitempty"`
 	// UpdateTime holds the value of the "update_time" field.
 	UpdateTime time.Time `json:"update_time,omitempty"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	Name string `json:"name,omitempty" redis:"name"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description,omitempty" redis:"description"`
 	// Total holds the value of the "total" field.
-	Total int `json:"total,omitempty"`
+	Total int `json:"total,omitempty" redis:"total"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the InventoryQuery when eager-loading is set.
 	Edges        InventoryEdges `json:"edges"`

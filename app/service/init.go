@@ -1,5 +1,11 @@
 package service
 
-import "ordersystem/middleware"
+import (
+	"context"
+	"ordersystem/middleware"
+)
 
-var logger = middleware.Logger()
+var (
+	logger = middleware.Logger()
+	ctx    = context.Background()
+)

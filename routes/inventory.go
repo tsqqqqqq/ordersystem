@@ -9,4 +9,5 @@ var inventoryController *controller.Inventory
 
 func Inventory(route *gin.RouterGroup) {
 	route.POST("/inventory", inventoryController.Post)
+	route.POST("/inventory/sync", inventoryController.Sync)
 }

@@ -13,10 +13,6 @@ type OrderInfo struct {
 	Count       int   `json:"count"`        // buy count
 }
 
-var (
-	ctx = context.Background()
-)
-
 // Save
 // 创建订单信息，保存到数据库。 更新库存信息。
 func (*Order) Save(data OrderInfo, c context.Context) error {

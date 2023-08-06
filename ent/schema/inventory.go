@@ -19,10 +19,10 @@ func (Inventory) Fields() []ent.Field {
 		field.Int64("id").DefaultFunc(func() int64 {
 			snow := new(common.Snowflake)
 			return snow.NextVal()
-		}),
-		field.String("name"),
-		field.String("description"),
-		field.Int("total"),
+		}).StructTag(`redis:"id"`),
+		field.String("name").StructTag(`redis:"name"`),
+		field.String("description").StructTag(`redis:"description"`),
+		field.Int("total").StructTag(`redis:"total"`),
 	}
 }
 
